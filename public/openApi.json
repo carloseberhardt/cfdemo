@@ -1,0 +1,165 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "version": "1.0.0",
+        "title": "nodefinger API",
+        "license": {
+            "name": "MIT"
+        }
+    },
+    "host": "127.0.0.1:3000",
+    "basePath": "/",
+    "schemes": [
+        "http"
+    ],
+    "consumes": [
+        "application/json"
+    ],
+    "produces": [
+        "application/json"
+    ],
+    "x-apigee-policies": {
+        "NodeFingerQuota": {
+            "type": "quota",
+            "options": {
+                "allow": 15,
+                "timeUnit": "minute",
+                "interval": 1
+            }
+        },
+        "SpikeArrest": {
+            "type": "spikeArrest",
+            "options": {
+                "allow": 5,
+                "timeUnit": "minute"
+            }
+        },
+        "ResponseCache": {
+            "type": "responseCache",
+            "options": {
+                "time": 300,
+                "identifier": "request.uri"
+            }
+        },
+        "SecureWrites": {
+            "type": "verifyApiKey",
+            "options": {
+                "in": "header",
+                "keyName": "apikey"
+            }
+        }
+    },
+    "x-apigee-apply": {
+        "SpikeArrest": {
+            "options": {
+                "on": "request",
+                "endPoint": "proxy",
+                "flow": "preFlow"
+            }
+        },
+        "NodeFingerQuota": {
+            "options": {
+                "on": "response",
+                "endPoint": "target",
+                "flow": "preFlow"
+            }
+        }
+    },
+    "paths": {
+        "/": {
+            "get": {
+                "summary": "NodeFinger API for Cloud Foundry",
+                "operationId": "instructions",
+                "responses": {
+                    "200": {
+                        "description": "A Json response with instructions"
+                    },
+                    "default": {
+                        "description": "unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/{name}": {
+            "get": {
+                "x-apigee-apply": {
+                    "ResponseCache": {
+                        "options": {
+                            "on": "request,response",
+                            "endPoint": "proxy"
+                        }
+                    }
+                },
+                "summary": "get status for username {name}",
+                "operationId": "getStatus",
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "path",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Status for username {name}"
+                    },
+                    "default": {
+                        "description": "Unexpected Error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "update status for username {name}",
+                "operationId": "updateStatus",
+                "security": [
+                    {
+                        "SecureWrites": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "path",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Updated status for username {name}"
+                    },
+                    "default": {
+                        "description": "Unexpected Error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "Error": {
+            "required": [
+                "code",
+                "message"
+            ],
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "format": "int32"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,6 @@
+---
+applications:
+- name: nf
+command: node index.js
+services:
+- nf-redis
